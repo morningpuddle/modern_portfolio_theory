@@ -37,12 +37,23 @@ def user_input_features():
 @st.cache
 def download(ticker1, ticker2, market_ticker):
 	return yf.download(ticker1 + " " + ticker2 + " " + market_ticker,start,end)
-ticker1, ticker2, market_ticker, start, end,rfr = user_input_features()
+
+ticker1, ticker2, market_ticker, start, end, rfr = user_input_features()
+
+# preliminary check if ticker exists
+nonexistant = []
+for t in [ticker1, ticker2, market_ticker]:
+	info = yf.Ticker(t).info
+	if info['regularMarketPrice'] == None:
+		nonexistant += [t]
+if len(nonexistant) > 0:
+	e = RuntimeError("Following tickers don\'t exist: " + ", ".join(nonexistant))
+	st.error(e)
+	st.stop()
 stocks = download(ticker1, ticker2, market_ticker)
 
 st.header("Closing Prices 📈")
-# TODO: format dates
-st.caption("Below shows daily closing prices for given duration from " + str(start) + " to " + str(end))
+st.caption("Below shows daily closing prices for given duration from " + start.strftime("%Y-%m-%d") + " to " + end.strftime("%Y-%m-%d"))
 prices = stocks["Close"]
 prices_long_form = prices.reset_index()
 prices_long_form = prices_long_form.rename(columns={'index':'Date'})
